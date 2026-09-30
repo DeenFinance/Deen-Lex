@@ -1,0 +1,55 @@
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q')?.toLowerCase() || '';
+  const year = searchParams.get('year');
+  const jurisdiction = searchParams.get('jurisdiction');
+
+  // MOCK DATA: Later this will be replaced with a Prisma DB call or ElasticSearch query
+  let mockDatabase = [
+    {
+      id: 1,
+      title: "Macfoy v. United Africa Co. Ltd",
+      citation: "[1961] 3 All ER 1169",
+      year: "1961",
+      jurisdiction: "United Kingdom",
+      summary: "A foundational case on the doctrine of nullity. Lord Denning held that if an act is void, then it is in law a nullity. It is not only bad, but incurably bad. You cannot put something on nothing and expect it to stay there."
+    },
+    {
+      id: 2,
+      title: "Ukeje v. Ukeje",
+      citation: "(2014) LPELR-22724(SC)",
+      year: "2014",
+      jurisdiction: "Nigeria",
+      summary: "The Supreme Court of Nigeria invalidated the Igbo customary law that denied female children the right to inherit their deceased father's estate, declaring it discriminatory and unconstitutional under Section 42 of the 1999 Constitution."
+    },
+    {
+      id: 3,
+      title: "R (Miller) v The Prime Minister",
+      citation: "[2019] UKSC 41",
+      year: "2019",
+      jurisdiction: "United Kingdom",
+      summary: "The UK Supreme Court ruled unanimously that the Prime Minister's advice to Her Majesty the Queen to prorogue Parliament was unlawful because it had the effect of frustrating or preventing the ability of Parliament to carry out its constitutional functions."
+    }
+  ];
+
+  // Filtering Logic
+  let filteredCases = mockDatabase;
+
+  if (query) {
+    filteredCases = filteredCases.filter(c => 
+      c.title.toLowerCase().includes(query) || c.summary.toLowerCase().includes(query)
+    );
+  }
+  if (year) {
+    filteredCases = filteredCases.filter(c => c.year === year);
+  }
+  if (jurisdiction && jurisdiction !== 'all') {
+    const jurisString = jurisdiction === 'nigeria' ? 'Nigeria' : 'United Kingdom';
+    filteredCases = filteredCases.filter(c => c.jurisdiction === jurisString);
+  }
+
+  // Next.js Edge friendly response
+  return NextResponse.json({ cases: filteredCases });
+}
