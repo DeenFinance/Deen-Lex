@@ -87,7 +87,7 @@ export default function Home() {
             <div key={caseItem.id || index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{caseItem.title}</h2>
+                  <a href={`/case/${caseItem.id}`} className="text-xl font-bold text-blue-600 hover:underline">{caseItem.title}</a>
                   <p className="text-sm text-gray-500 font-mono mt-1">{caseItem.citation} • {caseItem.year}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
