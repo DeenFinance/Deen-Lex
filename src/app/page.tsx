@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -7,20 +8,35 @@ export default function Home() {
   const [jurisdiction, setJurisdiction] = useState('all');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchCases = useCallback(async (searchQuery = '', searchYear = '', searchJurisdiction = 'all') => {
     setLoading(true);
-    
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&year=${encodeURIComponent(year)}&jurisdiction=${encodeURIComponent(jurisdiction)}`);
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('q', searchQuery);
+      if (searchYear) params.append('year', searchYear);
+      if (searchJurisdiction && searchJurisdiction !== 'all') params.append('jurisdiction', searchJurisdiction);
+
+      const response = await fetch(`/api/search?${params.toString()}`);
       const data = await response.json();
       setResults(data.cases || []);
     } catch (err) {
       console.error('Search error:', err);
     } finally {
       setLoading(false);
+      setHasSearched(true);
     }
+  }, []);
+
+  // Automatically fetch cases on page load
+  useEffect(() => {
+    fetchCases();
+  }, [fetchCases]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchCases(query, year, jurisdiction);
   };
 
   return (
@@ -68,7 +84,7 @@ export default function Home() {
         {/* Results Container */}
         <div className="space-y-6">
           {results.map((caseItem, index) => (
-            <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div key={caseItem.id || index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">{caseItem.title}</h2>
@@ -83,16 +99,16 @@ export default function Home() {
                 </span>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">AI Summary & Ratio</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Summary & Legal Principle</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">{caseItem.summary}</p>
               </div>
             </div>
           ))}
 
-          {results.length === 0 && !loading && (
+          {results.length === 0 && !loading && hasSearched && (
             <div className="text-center text-gray-500 py-16 bg-white rounded-2xl border border-dashed border-gray-300">
-              <p className="text-base font-medium">No cases displayed</p>
-              <p className="text-sm text-gray-400 mt-1">Try searching for &quot;Ukeje&quot;, &quot;Miller&quot;, or entering year &quot;1961&quot;.</p>
+              <p className="text-base font-medium">No matching cases found</p>
+              <p className="text-sm text-gray-400 mt-1">Try searching for &quot;Ukeje&quot;, &quot;1989&quot;, or clearing filter parameters.</p>
             </div>
           )}
         </div>
