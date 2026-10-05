@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl  !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
       { error: 'Missing SUPABASE_URL or SUPABASE_ANON_KEY' },
       { status: 500 }
@@ -16,9 +16,9 @@ export async function GET(request: Request) {
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const { searchParams } = new URL(request.url);
-  const query = (searchParams.get('q')  '').trim();
-  const year = searchParams.get('year')  '';
-  const jurisdiction = searchParams.get('jurisdiction')  'all';
+  const query = (searchParams.get('q') || '').trim();
+  const year = searchParams.get('year') || '';
+  const jurisdiction = searchParams.get('jurisdiction') || 'all';
 
   try {
     let q = supabase.from('case_law').select('*');
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     if (query) {
       const pattern = '"%' + query.replace(/[\\"]/g, '\\$&') + '%"';
       q = q.or(
-        title.ilike.${pattern},citation.ilike.${pattern},summary.ilike.${pattern}
+        `title.ilike.${pattern},citation.ilike.${pattern},summary.ilike.${pattern}`
       );
     }
 
