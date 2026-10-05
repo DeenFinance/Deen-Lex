@@ -1,39 +1,51 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 export default function CaseDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
+  const params = useParams();
+  const id = params?.id;
+
   const [caseData, setCaseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // AI Summary State
   const [aiSummary, setAiSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     async function fetchCase() {
+      if (!id) return;
       try {
         const res = await fetch(`/api/case?id=${id}`);
+        const contentType = res.headers.get('content-type');
+
+        if (!contentType || !contentType.includes('application/json')) {
+          setErrorMsg('API route returned invalid response format');
+          return;
+        }
+
         const data = await res.json();
-        if (data.caseItem) {
+        if (res.ok && data.caseItem) {
           setCaseData(data.caseItem);
         } else {
-          setErrorMsg(data.error || 'Case not found');
+          setErrorMsg(data.error || 'Case details not found');
         }
       } catch (err: any) {
+        console.error('Fetch error:', err);
         setErrorMsg('Failed to fetch case details');
       } finally {
         setLoading(false);
       }
     }
-    if (id) fetchCase();
+
+    fetchCase();
   }, [id]);
 
   const handleSummarize = async () => {
+    if (!caseData) return;
     setIsSummarizing(true);
     setAiSummary('');
     try {
@@ -46,14 +58,14 @@ export default function CaseDetailPage() {
       });
 
       const data = await res.json();
-      if (data.summary) {
+      if (res.ok && data.summary) {
         setAiSummary(data.summary);
       } else {
         alert(data.error || 'Failed to generate AI summary.');
       }
     } catch (err) {
-      console.error(err);
-      alert('Network error while generating summary.');
+      console.error('Summarize error:', err);
+      alert('Network error while generating AI summary.');
     } finally {
       setIsSummarizing(false);
     }
@@ -61,7 +73,7 @@ export default function CaseDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-gray-500">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-gray-500 font-sans">
         Loading case details...
       </div>
     );
@@ -69,11 +81,13 @@ export default function CaseDetailPage() {
 
   if (errorMsg || !caseData) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 text-center">
-        <p className="text-red-600 font-medium mb-4">{errorMsg || 'Case not found'}</p>
-        <button onClick={() => router.back()} className="text-blue-600 underline">
-          &larr; Back to Search
-        </button>
+      <div className="min-h-screen bg-gray-50 p-8 text-center font-sans">
+        <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <p className="text-red-600 font-medium mb-4">{errorMsg || 'Case not found'}</p>
+          <Link href="/" className="text-blue-600 font-semibold underline">
+            &larr; Back to Search
+          </Link>
+        </div>
       </div>
     );
   }
@@ -81,12 +95,12 @@ export default function CaseDetailPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-12 pb-36 font-sans">
       <div className="max-w-3xl mx-auto">
-        <button
-          onClick={() => router.back()}
+        <Link
+          href="/"
           className="text-blue-600 font-semibold mb-6 hover:underline inline-flex items-center gap-1"
         >
           &larr; Back to Search
-        </button>
+        </Link>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
           <div className="flex justify-between items-start mb-4">
@@ -122,7 +136,6 @@ export default function CaseDetailPage() {
           </div>
         </div>
 
-        {/* AI Summary Output Panel */}
         {aiSummary && (
           <div className="mt-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
             <h3 className="text-base font-bold text-blue-900 mb-3 flex items-center gap-2">
@@ -135,7 +148,6 @@ export default function CaseDetailPage() {
         )}
       </div>
 
-      {/* Floating Action Button */}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none z-50">
         <button
           onClick={handleSummarize}

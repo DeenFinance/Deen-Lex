@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -29,7 +30,6 @@ export default function Home() {
     }
   }, []);
 
-  // Automatically fetch cases on page load
   useEffect(() => {
     fetchCases();
   }, [fetchCases]);
@@ -42,13 +42,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">DEEN LEX</h1>
           <p className="text-gray-600 mt-2 text-base">Intelligent Search for Nigerian and English Case Law</p>
         </div>
         
-        {/* Search Bar Form */}
         <form onSubmit={handleSearch} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-3 mb-10">
           <input 
             type="text" 
@@ -81,13 +79,14 @@ export default function Home() {
           </button>
         </form>
 
-        {/* Results Container */}
         <div className="space-y-6">
           {results.map((caseItem, index) => (
             <div key={caseItem.id || index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <a href={`/case/${caseItem.id}`} className="text-xl font-bold text-blue-600 hover:underline">{caseItem.title}</a>
+                  <Link href={`/case/${caseItem.id}`} className="text-xl font-bold text-blue-600 hover:underline">
+                    {caseItem.title}
+                  </Link>
                   <p className="text-sm text-gray-500 font-mono mt-1">{caseItem.citation} • {caseItem.year}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
